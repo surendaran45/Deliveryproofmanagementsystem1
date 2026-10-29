@@ -327,7 +327,7 @@ app.post("/make-server-cca17b23/api/deliveries/verify-otp", verifyToken, async (
   try {
     const { delivery_id, otp } = await c.req.json();
 
-    if (!delivery_id || typeof otp !== "string" || !/^\\d{6}$/.test(otp)) {
+    if (!delivery_id || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
       return c.json({ error: "A delivery ID and six-digit OTP are required" }, 400);
     }
 
