@@ -41,7 +41,7 @@ npm run build
 
 ## Supabase configuration
 
-Configure these values in Supabase Edge Function secrets/settings. Never put service-role keys or JWT secrets in frontend environment variables or commit them to Git.
+Configure these values in Supabase Edge Function secrets/settings. Never put service-role keys or JWT secrets in frontend environment variables or commit them to Git. The server now fails to start if any required server secret is missing. Public registration is restricted to driver accounts; provision admin accounts through a trusted operator workflow, not public signup.
 
 - `SUPABASE_URL` — project URL.
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side service role key, only for the Edge Function.
