@@ -7,22 +7,35 @@ import * as jwt from "npm:jsonwebtoken@9.0.2";
 
 const app = new Hono();
 
-// Initialize Supabase client with service role key for admin operations
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-);
+// Fail closed when required server configuration is missing.
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const JWT_SECRET = Deno.env.get("JWT_SECRET");
 
-const JWT_SECRET = Deno.env.get("JWT_SECRET") ?? "your-secret-key-change-in-production";
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !JWT_SECRET) {
+  throw new Error(
+    "Missing required Supabase server configuration. Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and JWT_SECRET.",
+  );
+}
+
+// The service-role key must remain in this server-side Edge Function only.
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // Enable logger
 app.use("*", logger(console.log));
 
-// Enable CORS for all routes and methods
+// Set CORS_ORIGINS to comma-separated trusted frontend origins in production.
+const allowedOrigins = (Deno.env.get("CORS_ORIGINS") ?? "*")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(
   "/*",
   cors({
-    origin: "*",
+    origin: (origin) => allowedOrigins.includes("*")
+      ? "*"
+      : allowedOrigins.includes(origin) ? origin : "",
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
@@ -69,6 +82,12 @@ app.post("/make-server-cca17b23/api/auth/register", async (c) => {
 
     if (!["admin", "driver"].includes(role)) {
       return c.json({ error: "Invalid role. Must be 'admin' or 'driver'" }, 400);
+    }
+
+    // Public registration must never be allowed to create administrator accounts.
+    // Provision admins through a trusted operator workflow instead.
+    if (role === "admin") {
+      return c.json({ error: "Admin accounts must be provisioned by an administrator" }, 403);
     }
 
     // Check if user already exists
@@ -268,7 +287,9 @@ app.post("/make-server-cca17b23/api/deliveries/complete", verifyToken, async (c)
     }
 
     // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const randomValues = new Uint32Array(1);
+    crypto.getRandomValues(randomValues);
+    const otp = String(100000 + (randomValues[0] % 900000));
 
     // Update delivery
     const { data, error } = await supabase
@@ -306,8 +327,14 @@ app.post("/make-server-cca17b23/api/deliveries/verify-otp", verifyToken, async (
   try {
     const { delivery_id, otp } = await c.req.json();
 
-    if (!delivery_id || !otp) {
-      return c.json({ error: "Missing delivery_id or otp" }, 400);
+    if (!delivery_id || typeof otp !== "string" || !/^\\d{6}$/.test(otp)) {
+      return c.json({ error: "A delivery ID and six-digit OTP are required" }, 400);
+    }
+
+    const userId = c.get("userId");
+    const userRole = c.get("userRole");
+    if (userRole !== "admin" && userRole !== "driver") {
+      return c.json({ error: "Not authorized to verify OTPs" }, 403);
     }
 
     // Get delivery
@@ -319,6 +346,10 @@ app.post("/make-server-cca17b23/api/deliveries/verify-otp", verifyToken, async (
 
     if (fetchError || !delivery) {
       console.log("Delivery not found for OTP verification:", fetchError);
+      return c.json({ error: "Delivery not found" }, 404);
+    }
+
+    if (userRole === "driver" && delivery.driver_id !== userId) {
       return c.json({ error: "Delivery not found" }, 404);
     }
 
