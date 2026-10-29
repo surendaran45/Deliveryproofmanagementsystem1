@@ -5,7 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import * as bcrypt from "npm:bcryptjs@2.4.3";
 import * as jwt from "npm:jsonwebtoken@9.0.2";
 
-const app = new Hono();
+const app = new Hono<{ Variables: { userId: string; userRole: string } }>();
 
 // Fail closed when required server configuration is missing.
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
