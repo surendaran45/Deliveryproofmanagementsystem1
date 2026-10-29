@@ -1,243 +1,69 @@
-# 📦 Delivery Proof Management System
+# Delivery Proof Management System
 
-A comprehensive full-stack delivery management system with photo proof, GPS tracking, and OTP verification.
+A full-stack delivery workflow application with warehouse and delivery photo proof, GPS capture, OTP verification, and role-based driver/admin dashboards.
 
-## 🌟 Features
+## Features
 
-### 👨‍✈️ Driver Features
-- **Warehouse Pickup**
-  - Upload warehouse photo (before delivery)
-  - Capture GPS location at warehouse
-  - Enter delivery address
-  - Start delivery journey
+- Driver workflow: record warehouse pickup, capture GPS coordinates, enter the delivery address, and complete a delivery with photo and location proof.
+- Delivery verification: generate and verify a six-digit delivery OTP.
+- Admin workflow: review deliveries, inspect proof, and mark deliveries resolved or disputed.
+- Delivery history and status-based dashboard summaries.
 
-- **Complete Delivery**
-  - Upload delivery photo (after delivery)
-  - Capture GPS location at delivery point
-  - Generate 6-digit OTP automatically
-  - View delivery history
+## Technology
 
-### 👨‍💼 Admin Features
-- **Dashboard Overview**
-  - View all deliveries across all drivers
-  - Real-time delivery statistics
-  - Filter by status (In Transit, Delivered, Resolved, Disputed)
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, React Router, component libraries.
+- **Backend:** Supabase Edge Functions using Hono.
+- **Data and auth:** Supabase PostgreSQL, bcrypt password hashing, JWT bearer tokens.
+- **Browser APIs:** Geolocation and image/file input.
 
-- **Delivery Management**
-  - View warehouse and delivery photos side-by-side
-  - Check GPS coordinates for both locations
-  - Verify OTP status
-  - Mark deliveries as Resolved or Disputed
-  - View complete delivery timeline
+## Repository layout
 
-## 🛠️ Technology Stack
+- `src/` — React application, pages, components, and client services.
+- `supabase/functions/server/` — Edge Function API.
+- `supabase/DATABASE_SETUP.md` — database schema and setup notes.
+- `DEPLOYMENT_GUIDE.md` — deployment walkthrough.
+- `TESTING_CHECKLIST.md` — manual end-to-end test checklist.
 
-### Frontend
-- **React 18** with TypeScript
-- **TailwindCSS** for styling
-- **React Router** for navigation
-- **Shadcn/ui** components
-- **Sonner** for toast notifications
+## Local frontend development
 
-### Backend
-- **Supabase Edge Functions** (Hono web server)
-- **PostgreSQL** database
-- **JWT** authentication
-- **Bcrypt** password hashing
+Prerequisites: Node.js 20 LTS or a currently supported LTS release, npm, and a Supabase project configured for the Edge Function.
 
-### APIs & Services
-- **Google Maps Embed API** for location display
-- **Geolocation API** for GPS tracking
-- **Base64** image encoding for photo storage
-
-## 📁 Project Structure
-
-```
-/
-├── src/
-│   ├── app/
-│   │   ├── components/        # Reusable UI components
-│   │   ├── contexts/          # React contexts (Auth)
-│   │   ├── pages/             # Page components
-│   │   │   ├── Login.tsx
-│   │   │   ├── DriverDashboard.tsx
-│   │   │   ├── WarehousePickup.tsx
-│   │   │   ├── CompleteDelivery.tsx
-│   │   │   └── AdminDashboard.tsx
-│   │   ├── services/          # API services
-│   │   ├── App.tsx            # Main app component
-│   │   └── routes.ts          # Route configuration
-│   └── styles/                # Global styles
-├── supabase/
-│   └── functions/
-│       └── server/
-│           └── index.tsx      # Backend API server
-├── DATABASE_SETUP.md          # Database schema
-├── DEPLOYMENT_GUIDE.md        # Deployment instructions
-└── README.md                  # This file
+```bash
+npm install
+npm run dev
 ```
 
-## 🗄️ Database Schema
+Use the URL printed by Vite. To create a production build:
 
-### `users` Table
-- `id` - UUID (Primary Key)
-- `email` - Text (Unique)
-- `password_hash` - Text
-- `name` - Text
-- `role` - Text ('admin' or 'driver')
-- `created_at` - Timestamp
-
-### `deliveries` Table
-- `id` - UUID (Primary Key)
-- `driver_id` - UUID (Foreign Key → users.id)
-- `before_photo` - Text (Base64)
-- `warehouse_latitude` - Numeric
-- `warehouse_longitude` - Numeric
-- `delivery_address` - Text
-- `after_photo` - Text (Base64)
-- `delivery_latitude` - Numeric
-- `delivery_longitude` - Numeric
-- `otp` - Text (6 digits)
-- `otp_verified` - Boolean
-- `status` - Text (Pending/In Transit/Delivered/Resolved/Disputed)
-- `created_at` - Timestamp
-- `completed_at` - Timestamp
-
-## 🔐 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-
-### Deliveries
-- `POST /api/deliveries/start` - Start new delivery (Driver)
-- `POST /api/deliveries/complete` - Complete delivery (Driver)
-- `POST /api/deliveries/verify-otp` - Verify OTP
-- `GET /api/deliveries` - Get all deliveries (Admin sees all, Driver sees own)
-- `PATCH /api/deliveries/:id/resolve` - Mark as resolved (Admin)
-- `PATCH /api/deliveries/:id/dispute` - Mark as disputed (Admin)
-
-## 🚀 Getting Started
-
-### 1. Database Setup
-Run the SQL commands from `/supabase/DATABASE_SETUP.md` in your Supabase SQL Editor.
-
-### 2. Configure Environment Variables
-Set the following in your Supabase Edge Function settings:
-- `JWT_SECRET` - A strong random secret key
-
-### 3. Access the Application
-The application is ready to use! Just open it in your browser.
-
-### 4. Create Test Accounts
-
-**Admin Account:**
-- Email: admin@test.com
-- Password: admin123
-- Role: Admin
-
-**Driver Account:**
-- Email: driver@test.com
-- Password: driver123
-- Role: Driver
-
-## 📸 Screenshots & Workflow
-
-### Driver Workflow
-1. Login → Driver Dashboard
-2. Click "📦 Warehouse Pickup"
-3. Upload photo + Get GPS location + Enter address
-4. Click "Start Delivery" (Status: In Transit)
-5. Click "🚚 Complete Delivery"
-6. Upload photo + Get GPS location
-7. Click "Complete Delivery" → OTP generated
-8. Share OTP with recipient
-
-### Admin Workflow
-1. Login → Admin Dashboard
-2. View delivery statistics
-3. Browse all deliveries in table
-4. Click "View" to see photos and details
-5. Mark as "Resolved" or "Disputed"
-
-## 🔒 Security Features
-
-- ✅ JWT token-based authentication
-- ✅ Bcrypt password hashing
-- ✅ Role-based access control
-- ✅ Protected API routes with middleware
-- ✅ Input validation and error handling
-- ✅ CORS enabled for cross-origin requests
-
-## 📱 Responsive Design
-
-The application is fully responsive and works on:
-- 📱 Mobile phones
-- 📱 Tablets
-- 💻 Desktop computers
-
-## 🎨 UI/UX Features
-
-- Modern gradient backgrounds
-- Clean card-based layouts
-- Interactive buttons with hover effects
-- Loading states and error messages
-- Toast notifications for user feedback
-- Modal dialogs for detailed views
-- Status badges with color coding
-- Responsive tables and grids
-
-## 🌍 Maps Integration
-
-Uses Google Maps Embed API to display:
-- Warehouse location
-- Delivery location
-- Interactive map with zoom controls
-
-## 📊 Status Flow
-
-```
-Pending → In Transit → Delivered → Resolved/Disputed
+```bash
+npm run build
 ```
 
-- **Pending**: Initial state
-- **In Transit**: Driver started from warehouse
-- **Delivered**: Driver completed delivery (OTP generated)
-- **Resolved**: Admin confirmed successful delivery
-- **Disputed**: Admin marked delivery as problematic
+## Supabase configuration
 
-## 🐛 Known Limitations
+Configure these values in Supabase Edge Function secrets/settings. Never put service-role keys or JWT secrets in frontend environment variables or commit them to Git. The server now fails to start if any required server secret is missing. Public registration is restricted to driver accounts; provision admin accounts through a trusted operator workflow, not public signup.
 
-1. **Image Size**: Base64 encoding increases database size (consider Supabase Storage for production)
-2. **Location Accuracy**: Depends on device GPS and browser permissions
-3. **RLS Disabled**: Row Level Security is disabled for development (enable for production)
-4. **OTP Delivery**: OTP is only shown in app (consider SMS/Email integration)
+- `SUPABASE_URL` — project URL.
+- `SUPABASE_SERVICE_ROLE_KEY` — server-side service role key, only for the Edge Function.
+- `JWT_SECRET` — a long, random, private secret. The deployed server must not use a fallback/default secret.
 
-## 🚀 Future Enhancements
+Run the database instructions in `supabase/DATABASE_SETUP.md`, then deploy the Edge Function using the Supabase CLI or dashboard. Follow `DEPLOYMENT_GUIDE.md` for the remaining steps.
 
-- [ ] Email/SMS OTP delivery
-- [ ] Real-time delivery tracking
-- [ ] Route optimization
-- [ ] Driver analytics dashboard
-- [ ] Export delivery reports (PDF/CSV)
-- [ ] Image compression before upload
-- [ ] Offline mode (PWA)
-- [ ] Push notifications
-- [ ] Multi-language support
-- [ ] Dark mode
+## API
 
-## 📝 License
+The Edge Function exposes authentication and delivery endpoints under the `/make-server-cca17b23` prefix. See `supabase/functions/server/index.tsx` for the current route definitions.
 
-This project is for demonstration purposes.
+## Testing and CI
 
-## 🤝 Support
+The manual workflow checklist is in `TESTING_CHECKLIST.md`. GitHub Actions runs the frontend production build on pushes to `main` and this improvement branch, and on pull requests targeting `main`.
 
-For issues or questions:
-1. Check `DEPLOYMENT_GUIDE.md`
-2. Review Supabase Edge Function logs
-3. Check browser console for errors
-4. Verify database tables are created correctly
+```bash
+npm install
+npm run build
+```
 
----
+## Production security notes
 
-**Built with ❤️ using React, TypeScript, TailwindCSS, and Supabase**
+This project handles personal data, delivery locations, photographs, credentials, and OTPs. Do not deploy it as-is for real deliveries until the security items in [SECURITY.md](SECURITY.md) are resolved. In particular, verify Row Level Security policies, prevent public self-registration as an administrator, remove development secrets/defaults, restrict CORS to trusted origins, and review OTP generation, storage, exposure, expiry, and attempt limits.
+
+Use synthetic test accounts and non-sensitive sample data while developing. Never commit real credentials or customer delivery evidence.
